@@ -63,6 +63,16 @@ app.post("/api/users", async (req, res) => {
 		});
 });
 
+app.get("/api/users", async (req, res) => {
+	await User.find({})
+		.then((result) => {
+			res.json(result);
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+});
+
 const listener = app.listen(process.env.PORT || 3000, () => {
 	console.log("Your app is listening on port " + listener.address().port);
 });
