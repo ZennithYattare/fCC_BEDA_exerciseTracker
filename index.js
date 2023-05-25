@@ -19,7 +19,7 @@ mongoose
 	.catch((err) => console.error(err));
 
 const exerciseSchema = new mongoose.Schema({
-	username: { type: String, required: true },
+	userId: { type: String, required: true },
 	description: { type: String, required: true },
 	duration: { type: Number, required: true },
 	date: { type: Date, default: Date.now },
@@ -67,6 +67,41 @@ app.get("/api/users", async (req, res) => {
 	await User.find({})
 		.then((result) => {
 			res.json(result);
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+});
+
+app.post("/api/users/:_id/exercises", async (req, res) => {
+	const { _id } = req.params;
+	const { description, duration, date } = req.body;
+
+	// Find the user by ID
+	const user = await User.findById(_id);
+	if (!user) {
+		return res.status(404).send("User not found");
+	}
+
+	// Create a new exercise
+	const exercise = new Exercise({
+		userId: user._id,
+		description,
+		duration,
+		date: date ? new Date(date) : undefined,
+	});
+
+	// Save the exercise to the database
+	await exercise
+		.save()
+		.then((result) => {
+			res.json({
+				username: user.username,
+				description,
+				duration,
+				_id: user._id,
+				date: result.date.toDateString(),
+			});
 		})
 		.catch((err) => {
 			console.log(err);
