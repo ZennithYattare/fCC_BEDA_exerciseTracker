@@ -98,13 +98,53 @@ app.post("/api/users/:_id/exercises", async (req, res) => {
 			res.json({
 				username: user.username,
 				description,
-				duration,
+				duration: parseInt(duration),
 				_id: user._id,
 				date: result.date.toDateString(),
 			});
 		})
 		.catch((err) => {
 			console.log(err);
+		});
+});
+
+app.get("/api/users/:_id/logs", (req, res) => {
+	const { from, to, limit } = req.query;
+	const userId = req.params._id;
+
+	// Find the user by ID
+	User.findById(userId)
+		.then((user) => {
+			if (!user) {
+				return res.status(404).send("User not found");
+			}
+
+			// Find the exercises for the user
+			Exercise.find({ userId: user._id })
+				.where("date")
+				.gte(from || "1970-01-01")
+				.lte(to || Date.now())
+				.limit(parseInt(limit))
+				.exec()
+				.then((exercises) => {
+					// Format the exercises as a log
+					const count = exercises.length;
+					const log = exercises.map((exercise) => ({
+						description: exercise.description,
+						duration: exercise.duration,
+						date: exercise.date.toDateString(),
+					}));
+
+					res.json({ username: user.username, count, log });
+				})
+				.catch((err) => {
+					console.error(err);
+					res.status(500).send("Server error");
+				});
+		})
+		.catch((err) => {
+			console.error(err);
+			res.status(500).send("Server error");
 		});
 });
 
